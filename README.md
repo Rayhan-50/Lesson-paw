@@ -116,7 +116,7 @@
 - MongoDB
 - Firebase account
 ### 🧪 Demo Credentials (Admin)
-```bash
+
 Email: yusufoesta5t@gmail.com  
 Password: Fa@1234  
 > Note: Please use these credentials responsibly and for demonstration purposes only.
