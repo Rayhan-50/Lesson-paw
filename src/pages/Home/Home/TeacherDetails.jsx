@@ -8,7 +8,7 @@
 // import {
 //   FaUserGraduate, FaDollarSign, FaBook, FaChalkboardTeacher, FaStar, FaMapMarkerAlt,
 //   FaLanguage, FaArrowLeft, FaQuoteLeft, FaEnvelope, FaPhone, FaCheckCircle,
-//   FaWhatsapp, FaShare, FaChevronUp, FaChevronDown, FaLock
+//   FaWhatsapp, FaShare, FaChevronUp, FaChevronDown, FaLock, FaThumbsUp
 // } from 'react-icons/fa';
 // import { motion } from 'framer-motion';
 // import { useForm } from 'react-hook-form';
@@ -22,6 +22,7 @@
 //   const [showAllReviews, setShowAllReviews] = useState(false);
 //   const [hasUserRated, setHasUserRated] = useState(false);
 //   const [hasPaidForTutor, setHasPaidForTutor] = useState(false);
+//   const [hasConfirmedService, setHasConfirmedService] = useState(false);
 
 //   const { data: tutor, isLoading: tutorLoading, error: tutorError } = useQuery({
 //     queryKey: ['tutor', tutorId],
@@ -49,6 +50,17 @@
 //     enabled: !!user?.email,
 //     queryFn: async () => {
 //       const res = await axiosSecure.get(`/payments/${user.email}`);
+//       return res.data;
+//     },
+//   });
+
+//   const { data: confirmations, isLoading: confirmationsLoading } = useQuery({
+//     queryKey: ['confirmations', user?.email, tutorId],
+//     enabled: !!user?.email && !!tutorId,
+//     queryFn: async () => {
+//       const res = await axiosSecure.get(`/confirmations?email=${user.email}&tutorId=${tutorId}`);
+//       const hasConfirmed = res.data.some(confirmation => confirmation.tutorId === tutorId);
+//       setHasConfirmedService(hasConfirmed);
 //       return res.data;
 //     },
 //   });
@@ -144,7 +156,6 @@
 //       return;
 //     }
 
-//     // Safeguard for invalid contactNumber
 //     const cleanedNumber = tutor.contactNumber?.replace(/[^0-9]/g, '') || '';
 //     if (!cleanedNumber) {
 //       Swal.fire({
@@ -158,7 +169,70 @@
 //     window.open(`https://wa.me/${cleanedNumber}`, '_blank');
 //   };
 
-//   if (tutorLoading || ratingsLoading || paymentsLoading) {
+//   const handleConfirmService = async () => {
+//     if (!user) {
+//       Swal.fire({
+//         icon: 'info',
+//         title: 'Login Required',
+//         text: 'Please log in to confirm the service.',
+//         confirmButtonText: 'Login',
+//       }).then(() => navigate('/login'));
+//       return;
+//     }
+
+//     if (!hasPaidForTutor) {
+//       Swal.fire({
+//         title: 'Booking Required',
+//         text: 'Please book this tutor first to confirm the service.',
+//         icon: 'info',
+//         showCancelButton: true,
+//         confirmButtonText: 'Book Now',
+//         cancelButtonText: 'Cancel'
+//       }).then(result => {
+//         if (result.isConfirmed) {
+//           handleBookTutor();
+//         }
+//       });
+//       return;
+//     }
+
+//     if (hasConfirmedService) {
+//       Swal.fire({
+//         icon: 'info',
+//         title: 'Already Confirmed',
+//         text: 'You have already confirmed the service for this tutor.',
+//       });
+//       return;
+//     }
+
+//     try {
+//       await axiosSecure.post('/confirmations', {
+//         email: user.email,
+//         tutorId: tutor._id,
+//         tutorName: tutor.name,
+//         confirmedAt: new Date(),
+//       });
+
+//       Swal.fire({
+//         icon: 'success',
+//         title: 'Service Confirmed',
+//         text: 'Thank you for confirming the service!',
+//         timer: 1500,
+//         showConfirmButton: false,
+//       });
+
+//       setHasConfirmedService(true);
+//     } catch (error) {
+//       console.error('Error confirming service:', error);
+//       Swal.fire({
+//         icon: 'error',
+//         title: 'Error',
+//         text: 'Failed to confirm service. Please try again.',
+//       });
+//     }
+//   };
+
+//   if (tutorLoading || ratingsLoading || paymentsLoading || confirmationsLoading) {
 //     return (
 //       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#005482] to-[#70C5D7]">
 //         <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-[#FFFFFF]"></div>
@@ -308,7 +382,14 @@
 //                   </div>
 //                   <div>
 //                     <div className="text-sm text-gray-500">Email</div>
-//                     <div className="text-[#005482]">{tutor.email || 'Not provided'}</div>
+//                     {hasPaidForTutor ? (
+//                       <div className="text-[#005482]">{tutor.email || 'Not provided'}</div>
+//                     ) : (
+//                       <div className="flex items-center gap-2 text-gray-400">
+//                         <FaLock className="text-sm" />
+//                         <span>Book tutor to view email</span>
+//                       </div>
+//                     )}
 //                   </div>
 //                 </div>
 //                 <div className="flex items-center gap-4 p-4 bg-[#70C5D7]/5 rounded-xl">
@@ -317,7 +398,14 @@
 //                   </div>
 //                   <div>
 //                     <div className="text-sm text-gray-500">Phone</div>
-//                     <div className="text-[#005482]">{tutor.contactNumber || 'Not provided'}</div>
+//                     {hasPaidForTutor ? (
+//                       <div className="text-[#005482]">{tutor.contactNumber || 'Not provided'}</div>
+//                     ) : (
+//                       <div className="flex items-center gap-2 text-gray-400">
+//                         <FaLock className="text-sm" />
+//                         <span>Book tutor to view phone</span>
+//                       </div>
+//                     )}
 //                   </div>
 //                 </div>
 //                 <div className="flex items-center gap-4 p-4 bg-[#70C5D7]/5 rounded-xl">
@@ -359,6 +447,34 @@
 
 //           {/* Main Content Area */}
 //           <div className="lg:col-span-8 space-y-8">
+//             {/* Confirm Service Section */}
+//             <motion.section
+//               initial={{ opacity: 0, y: 20 }}
+//               animate={{ opacity: 1, y: 0 }}
+//               className="bg-white rounded-2xl shadow-sm p-8"
+//             >
+//               <h2 className="text-2xl font-bold text-[#005482] mb-6 flex items-center gap-3">
+//                 <FaThumbsUp className="text-[#FCBB45]" /> Confirm Service
+//               </h2>
+//               <div className="prose max-w-none text-gray-600">
+//                 <p className="text-lg leading-relaxed mb-4">
+//                   Did you receive the tutoring service perfectly? Confirm below to let us know!
+//                 </p>
+//                 <button
+//                   onClick={handleConfirmService}
+//                   className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${
+//                     hasPaidForTutor && !hasConfirmedService
+//                       ? 'bg-[#005482] text-white hover:bg-[#004368] shadow-lg hover:shadow-xl transform hover:-translate-y-0.5'
+//                       : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+//                   }`}
+//                   disabled={!hasPaidForTutor || hasConfirmedService}
+//                 >
+//                   <FaThumbsUp className="text-sm" />
+//                   {hasConfirmedService ? 'Service Confirmed' : 'Confirm Service Received'}
+//                 </button>
+//               </div>
+//             </motion.section>
+
 //             {/* About Section */}
 //             <motion.section
 //               initial={{ opacity: 0, y: 20 }}
@@ -657,7 +773,7 @@
 // import {
 //   FaUserGraduate, FaDollarSign, FaBook, FaChalkboardTeacher, FaStar, FaMapMarkerAlt,
 //   FaLanguage, FaArrowLeft, FaQuoteLeft, FaEnvelope, FaPhone, FaCheckCircle,
-//   FaWhatsapp, FaShare, FaChevronUp, FaChevronDown, FaLock
+//   FaWhatsapp, FaShare, FaChevronUp, FaChevronDown, FaLock, FaThumbsUp
 // } from 'react-icons/fa';
 // import { motion } from 'framer-motion';
 // import { useForm } from 'react-hook-form';
@@ -671,6 +787,7 @@
 //   const [showAllReviews, setShowAllReviews] = useState(false);
 //   const [hasUserRated, setHasUserRated] = useState(false);
 //   const [hasPaidForTutor, setHasPaidForTutor] = useState(false);
+//   const [hasConfirmedService, setHasConfirmedService] = useState(false);
 
 //   const { data: tutor, isLoading: tutorLoading, error: tutorError } = useQuery({
 //     queryKey: ['tutor', tutorId],
@@ -702,6 +819,17 @@
 //     },
 //   });
 
+//   const { data: confirmations, isLoading: confirmationsLoading } = useQuery({
+//     queryKey: ['confirmations', user?.email, tutorId],
+//     enabled: !!user?.email && !!tutorId,
+//     queryFn: async () => {
+//       const res = await axiosSecure.get(`/confirmations?email=${user.email}&tutorId=${tutorId}`);
+//       const hasConfirmed = res.data.some(confirmation => confirmation.tutorId === tutorId);
+//       setHasConfirmedService(hasConfirmed);
+//       return res.data;
+//     },
+//   });
+
 //   useEffect(() => {
 //     if (payments && tutor) {
 //       const paidTutorEmails = payments.flatMap(payment => payment.tutorEmails || []);
@@ -716,6 +844,13 @@
 //         title: 'Login Required',
 //         text: 'Please log in to book a tutor.',
 //         confirmButtonText: 'Login',
+//         confirmButtonColor: '#DA3A60',
+//         background: '#FFFFFF',
+//         iconColor: '#FCBB45',
+//         customClass: {
+//           title: 'text-[#005482] font-bold',
+//           content: 'text-[#70C5D7]'
+//         }
 //       }).then(() => navigate('/login'));
 //       return;
 //     }
@@ -729,7 +864,46 @@
 //           icon: 'info',
 //           title: 'Already Booked',
 //           text: 'You have already booked this tutor.',
+//           confirmButtonColor: '#DA3A60',
+//           background: '#FFFFFF',
+//           iconColor: '#FCBB45',
+//           customClass: {
+//             title: 'text-[#005482] font-bold',
+//             content: 'text-[#70C5D7]'
+//           }
 //         });
+//         return;
+//       }
+
+//       // Show booking confirmation popup
+//       const result = await Swal.fire({
+//         title: 'Confirm Booking',
+//         html: `
+//           <div class="text-left">
+//             <p class="text-[#005482] mb-4">Are you sure you want to book this tutor?</p>
+//             <div class="bg-[#F8FBFF] p-4 rounded-xl">
+//               <p class="text-[#70C5D7] mb-2">Tutor Details:</p>
+//               <p class="text-[#005482]"><strong>Name:</strong> ${tutor.name}</p>
+//               <p class="text-[#005482]"><strong>Subject:</strong> ${tutor.subjects?.[0] || 'Not specified'}</p>
+//               <p class="text-[#005482]"><strong>Rate:</strong> $${tutor.hourlyRate}/hour</p>
+//             </div>
+//           </div>
+//         `,
+//         icon: 'question',
+//         showCancelButton: true,
+//         confirmButtonColor: '#DA3A60',
+//         cancelButtonColor: '#70C5D7',
+//         confirmButtonText: 'Yes, Book Now',
+//         cancelButtonText: 'Cancel',
+//         background: '#FFFFFF',
+//         iconColor: '#FCBB45',
+//         customClass: {
+//           title: 'text-[#005482] font-bold',
+//           htmlContainer: 'text-left'
+//         }
+//       });
+
+//       if (!result.isConfirmed) {
 //         return;
 //       }
 
@@ -744,18 +918,31 @@
 
 //       Swal.fire({
 //         icon: 'success',
-//         title: 'Success',
-//         text: 'Tutor booked successfully!',
+//         title: 'Booking Successful!',
+//         text: 'The tutor has been booked successfully.',
 //         timer: 1500,
 //         showConfirmButton: false,
+//         background: '#FFFFFF',
+//         iconColor: '#FCBB45',
+//         customClass: {
+//           title: 'text-[#005482] font-bold',
+//           content: 'text-[#70C5D7]'
+//         }
 //       });
 //       navigate('/dashboard/my-bookings');
 //     } catch (error) {
 //       console.error('Error booking tutor:', error);
 //       Swal.fire({
 //         icon: 'error',
-//         title: 'Error',
+//         title: 'Booking Failed',
 //         text: 'Failed to book tutor. Please try again.',
+//         confirmButtonColor: '#DA3A60',
+//         background: '#FFFFFF',
+//         iconColor: '#DA3A60',
+//         customClass: {
+//           title: 'text-[#005482] font-bold',
+//           content: 'text-[#70C5D7]'
+//         }
 //       });
 //     }
 //   };
@@ -793,7 +980,6 @@
 //       return;
 //     }
 
-//     // Safeguard for invalid contactNumber
 //     const cleanedNumber = tutor.contactNumber?.replace(/[^0-9]/g, '') || '';
 //     if (!cleanedNumber) {
 //       Swal.fire({
@@ -807,7 +993,70 @@
 //     window.open(`https://wa.me/${cleanedNumber}`, '_blank');
 //   };
 
-//   if (tutorLoading || ratingsLoading || paymentsLoading) {
+//   const handleConfirmService = async () => {
+//     if (!user) {
+//       Swal.fire({
+//         icon: 'info',
+//         title: 'Login Required',
+//         text: 'Please log in to confirm the service.',
+//         confirmButtonText: 'Login',
+//       }).then(() => navigate('/login'));
+//       return;
+//     }
+
+//     if (!hasPaidForTutor) {
+//       Swal.fire({
+//         title: 'Booking Required',
+//         text: 'Please book this tutor first to confirm the service.',
+//         icon: 'info',
+//         showCancelButton: true,
+//         confirmButtonText: 'Book Now',
+//         cancelButtonText: 'Cancel'
+//       }).then(result => {
+//         if (result.isConfirmed) {
+//           handleBookTutor();
+//         }
+//       });
+//       return;
+//     }
+
+//     if (hasConfirmedService) {
+//       Swal.fire({
+//         icon: 'info',
+//         title: 'Already Confirmed',
+//         text: 'You have already confirmed the service for this tutor.',
+//       });
+//       return;
+//     }
+
+//     try {
+//       await axiosSecure.post('/confirmations', {
+//         email: user.email,
+//         tutorId: tutor._id,
+//         tutorName: tutor.name,
+//         confirmedAt: new Date(),
+//       });
+
+//       Swal.fire({
+//         icon: 'success',
+//         title: 'Service Confirmed',
+//         text: 'Thank you for confirming the service!',
+//         timer: 1500,
+//         showConfirmButton: false,
+//       });
+
+//       setHasConfirmedService(true);
+//     } catch (error) {
+//       console.error('Error confirming service:', error);
+//       Swal.fire({
+//         icon: 'error',
+//         title: 'Error',
+//         text: 'Failed to confirm service. Please try again.',
+//       });
+//     }
+//   };
+
+//   if (tutorLoading || ratingsLoading || paymentsLoading || confirmationsLoading) {
 //     return (
 //       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#005482] to-[#70C5D7]">
 //         <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-[#FFFFFF]"></div>
@@ -1022,6 +1271,34 @@
 
 //           {/* Main Content Area */}
 //           <div className="lg:col-span-8 space-y-8">
+//             {/* Confirm Service Section */}
+//             <motion.section
+//               initial={{ opacity: 0, y: 20 }}
+//               animate={{ opacity: 1, y: 0 }}
+//               className="bg-white rounded-2xl shadow-sm p-8"
+//             >
+//               <h2 className="text-2xl font-bold text-[#005482] mb-6 flex items-center gap-3">
+//                 <FaThumbsUp className="text-[#FCBB45]" /> Confirm Service
+//               </h2>
+//               <div className="prose max-w-none text-gray-600">
+//                 <p className="text-lg leading-relaxed mb-4">
+//                   Did you receive the tutoring service perfectly? Confirm below to let us know!
+//                 </p>
+//                 <button
+//                   onClick={handleConfirmService}
+//                   className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${
+//                     hasPaidForTutor && !hasConfirmedService
+//                       ? 'bg-[#005482] text-white hover:bg-[#004368] shadow-lg hover:shadow-xl transform hover:-translate-y-0.5'
+//                       : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+//                   }`}
+//                   disabled={!hasPaidForTutor || hasConfirmedService}
+//                 >
+//                   <FaThumbsUp className="text-sm" />
+//                   {hasConfirmedService ? 'Service Confirmed' : 'Confirm Service Received'}
+//                 </button>
+//               </div>
+//             </motion.section>
+
 //             {/* About Section */}
 //             <motion.section
 //               initial={{ opacity: 0, y: 20 }}
@@ -1313,7 +1590,6 @@
 // export default TeacherDetails;
 
 
-
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useContext, useState, useEffect } from 'react';
@@ -1333,10 +1609,20 @@ const TeacherDetails = () => {
   const axiosSecure = useAxiosSecure();
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
+  const queryClient = useQueryClient();
   const [showAllReviews, setShowAllReviews] = useState(false);
   const [hasUserRated, setHasUserRated] = useState(false);
   const [hasPaidForTutor, setHasPaidForTutor] = useState(false);
   const [hasConfirmedService, setHasConfirmedService] = useState(false);
+
+  // Invalidate queries when user changes to ensure fresh data
+  useEffect(() => {
+    if (user?.email) {
+      console.log('User email:', user.email);
+      queryClient.invalidateQueries(['payments', user.email]);
+      queryClient.invalidateQueries(['confirmations', user.email, tutorId]);
+    }
+  }, [user?.email, tutorId, queryClient]);
 
   const { data: tutor, isLoading: tutorLoading, error: tutorError } = useQuery({
     queryKey: ['tutor', tutorId],
@@ -1364,6 +1650,7 @@ const TeacherDetails = () => {
     enabled: !!user?.email,
     queryFn: async () => {
       const res = await axiosSecure.get(`/payments/${user.email}`);
+      console.log('Payments data:', res.data);
       return res.data;
     },
   });
@@ -1373,8 +1660,10 @@ const TeacherDetails = () => {
     enabled: !!user?.email && !!tutorId,
     queryFn: async () => {
       const res = await axiosSecure.get(`/confirmations?email=${user.email}&tutorId=${tutorId}`);
+      console.log('Confirmations data:', res.data);
       const hasConfirmed = res.data.some(confirmation => confirmation.tutorId === tutorId);
       setHasConfirmedService(hasConfirmed);
+      console.log('Has confirmed service:', hasConfirmed);
       return res.data;
     },
   });
@@ -1382,7 +1671,9 @@ const TeacherDetails = () => {
   useEffect(() => {
     if (payments && tutor) {
       const paidTutorEmails = payments.flatMap(payment => payment.tutorEmails || []);
-      setHasPaidForTutor(paidTutorEmails.includes(tutor.email));
+      const hasPaid = paidTutorEmails.includes(tutor.email);
+      setHasPaidForTutor(hasPaid);
+      console.log('Has paid for tutor:', hasPaid);
     }
   }, [payments, tutor]);
 
@@ -1393,6 +1684,13 @@ const TeacherDetails = () => {
         title: 'Login Required',
         text: 'Please log in to book a tutor.',
         confirmButtonText: 'Login',
+        confirmButtonColor: '#DA3A60',
+        background: '#FFFFFF',
+        iconColor: '#FCBB45',
+        customClass: {
+          title: 'text-[#005482] font-bold',
+          content: 'text-[#70C5D7]'
+        }
       }).then(() => navigate('/login'));
       return;
     }
@@ -1406,7 +1704,45 @@ const TeacherDetails = () => {
           icon: 'info',
           title: 'Already Booked',
           text: 'You have already booked this tutor.',
+          confirmButtonColor: '#DA3A60',
+          background: '#FFFFFF',
+          iconColor: '#FCBB45',
+          customClass: {
+            title: 'text-[#005482] font-bold',
+            content: 'text-[#70C5D7]'
+          }
         });
+        return;
+      }
+
+      const result = await Swal.fire({
+        title: 'Confirm Booking',
+        html: `
+          <div class="text-left">
+            <p class="text-[#005482] mb-4">Are you sure you want to book this tutor?</p>
+            <div class="bg-[#F8FBFF] p-4 rounded-xl">
+              <p class="text-[#70C5D7] mb-2">Tutor Details:</p>
+              <p class="text-[#005482]"><strong>Name:</strong> ${tutor.name}</p>
+              <p class="text-[#005482]"><strong>Subject:</strong> ${tutor.subjects?.[0] || 'Not specified'}</p>
+              <p class="text-[#005482]"><strong>Rate:</strong> $${tutor.hourlyRate}/hour</p>
+            </div>
+          </div>
+        `,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#DA3A60',
+        cancelButtonColor: '#70C5D7',
+        confirmButtonText: 'Yes, Book Now',
+        cancelButtonText: 'Cancel',
+        background: '#FFFFFF',
+        iconColor: '#FCBB45',
+        customClass: {
+          title: 'text-[#005482] font-bold',
+          htmlContainer: 'text-left'
+        }
+      });
+
+      if (!result.isConfirmed) {
         return;
       }
 
@@ -1419,20 +1755,35 @@ const TeacherDetails = () => {
         status: 'Pending',
       });
 
+      queryClient.invalidateQueries(['payments', user.email]);
+
       Swal.fire({
         icon: 'success',
-        title: 'Success',
-        text: 'Tutor booked successfully!',
+        title: 'Booking Successful!',
+        text: 'The tutor has been booked successfully.',
         timer: 1500,
         showConfirmButton: false,
+        background: '#FFFFFF',
+        iconColor: '#FCBB45',
+        customClass: {
+          title: 'text-[#005482] font-bold',
+          content: 'text-[#70C5D7]'
+        }
       });
       navigate('/dashboard/my-bookings');
     } catch (error) {
       console.error('Error booking tutor:', error);
       Swal.fire({
         icon: 'error',
-        title: 'Error',
+        title: 'Booking Failed',
         text: 'Failed to book tutor. Please try again.',
+        confirmButtonColor: '#DA3A60',
+        background: '#FFFFFF',
+        iconColor: '#DA3A60',
+        customClass: {
+          title: 'text-[#005482] font-bold',
+          content: 'text-[#70C5D7]'
+        }
       });
     }
   };
@@ -1445,7 +1796,15 @@ const TeacherDetails = () => {
         icon: 'info',
         showCancelButton: true,
         confirmButtonText: 'Login',
-        cancelButtonText: 'Cancel'
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#DA3A60',
+        cancelButtonColor: '#70C5D7',
+        background: '#FFFFFF',
+        iconColor: '#FCBB45',
+        customClass: {
+          title: 'text-[#005482] font-bold',
+          content: 'text-[#70C5D7]'
+        }
       }).then(result => {
         if (result.isConfirmed) {
           navigate('/login');
@@ -1461,7 +1820,15 @@ const TeacherDetails = () => {
         icon: 'info',
         showCancelButton: true,
         confirmButtonText: 'Book Now',
-        cancelButtonText: 'Cancel'
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#DA3A60',
+        cancelButtonColor: '#70C5D7',
+        background: '#FFFFFF',
+        iconColor: '#FCBB45',
+        customClass: {
+          title: 'text-[#005482] font-bold',
+          content: 'text-[#70C5D7]'
+        }
       }).then(result => {
         if (result.isConfirmed) {
           handleBookTutor();
@@ -1476,6 +1843,13 @@ const TeacherDetails = () => {
         icon: 'error',
         title: 'Error',
         text: 'No valid contact number provided.',
+        confirmButtonColor: '#DA3A60',
+        background: '#FFFFFF',
+        iconColor: '#DA3A60',
+        customClass: {
+          title: 'text-[#005482] font-bold',
+          content: 'text-[#70C5D7]'
+        }
       });
       return;
     }
@@ -1490,6 +1864,13 @@ const TeacherDetails = () => {
         title: 'Login Required',
         text: 'Please log in to confirm the service.',
         confirmButtonText: 'Login',
+        confirmButtonColor: '#DA3A60',
+        background: '#FFFFFF',
+        iconColor: '#FCBB45',
+        customClass: {
+          title: 'text-[#005482] font-bold',
+          content: 'text-[#70C5D7]'
+        }
       }).then(() => navigate('/login'));
       return;
     }
@@ -1501,7 +1882,15 @@ const TeacherDetails = () => {
         icon: 'info',
         showCancelButton: true,
         confirmButtonText: 'Book Now',
-        cancelButtonText: 'Cancel'
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#DA3A60',
+        cancelButtonColor: '#70C5D7',
+        background: '#FFFFFF',
+        iconColor: '#FCBB45',
+        customClass: {
+          title: 'text-[#005482] font-bold',
+          content: 'text-[#70C5D7]'
+        }
       }).then(result => {
         if (result.isConfirmed) {
           handleBookTutor();
@@ -1515,11 +1904,39 @@ const TeacherDetails = () => {
         icon: 'info',
         title: 'Already Confirmed',
         text: 'You have already confirmed the service for this tutor.',
+        confirmButtonColor: '#DA3A60',
+        background: '#FFFFFF',
+        iconColor: '#FCBB45',
+        customClass: {
+          title: 'text-[#005482] font-bold',
+          content: 'text-[#70C5D7]'
+        }
       });
       return;
     }
 
     try {
+      const result = await Swal.fire({
+        title: 'Confirm Service',
+        text: `Are you sure you want to confirm the tutoring service for ${tutor.name}? This action cannot be undone.`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#DA3A60',
+        cancelButtonColor: '#70C5D7',
+        confirmButtonText: 'Yes, Confirm',
+        cancelButtonText: 'Cancel',
+        background: '#FFFFFF',
+        iconColor: '#FCBB45',
+        customClass: {
+          title: 'text-[#005482] font-bold',
+          content: 'text-[#70C5D7]'
+        }
+      });
+
+      if (!result.isConfirmed) {
+        return;
+      }
+
       await axiosSecure.post('/confirmations', {
         email: user.email,
         tutorId: tutor._id,
@@ -1527,12 +1944,20 @@ const TeacherDetails = () => {
         confirmedAt: new Date(),
       });
 
+      queryClient.invalidateQueries(['confirmations', user.email, tutorId]);
+
       Swal.fire({
         icon: 'success',
         title: 'Service Confirmed',
         text: 'Thank you for confirming the service!',
         timer: 1500,
         showConfirmButton: false,
+        background: '#FFFFFF',
+        iconColor: '#FCBB45',
+        customClass: {
+          title: 'text-[#005482] font-bold',
+          content: 'text-[#70C5D7]'
+        }
       });
 
       setHasConfirmedService(true);
@@ -1542,6 +1967,13 @@ const TeacherDetails = () => {
         icon: 'error',
         title: 'Error',
         text: 'Failed to confirm service. Please try again.',
+        confirmButtonColor: '#DA3A60',
+        background: '#FFFFFF',
+        iconColor: '#DA3A60',
+        customClass: {
+          title: 'text-[#005482] font-bold',
+          content: 'text-[#70C5D7]'
+        }
       });
     }
   };
@@ -1563,7 +1995,18 @@ const TeacherDetails = () => {
   }
 
   if (paymentsError) {
-    console.error('Payments error:', paymentsError);
+    Swal.fire({
+      icon: 'error',
+      title: 'Payment Error',
+      text: 'Failed to load payment information. Please try again later.',
+      confirmButtonColor: '#DA3A60',
+      background: '#FFFFFF',
+      iconColor: '#DA3A60',
+      customClass: {
+        title: 'text-[#005482] font-bold',
+        content: 'text-[#70C5D7]'
+      }
+    });
   }
 
   if (!tutor) {
@@ -1771,21 +2214,27 @@ const TeacherDetails = () => {
                 <FaThumbsUp className="text-[#FCBB45]" /> Confirm Service
               </h2>
               <div className="prose max-w-none text-gray-600">
-                <p className="text-lg leading-relaxed mb-4">
-                  Did you receive the tutoring service perfectly? Confirm below to let us know!
-                </p>
-                <button
-                  onClick={handleConfirmService}
-                  className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${
-                    hasPaidForTutor && !hasConfirmedService
-                      ? 'bg-[#005482] text-white hover:bg-[#004368] shadow-lg hover:shadow-xl transform hover:-translate-y-0.5'
-                      : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                  }`}
-                  disabled={!hasPaidForTutor || hasConfirmedService}
-                >
-                  <FaThumbsUp className="text-sm" />
-                  {hasConfirmedService ? 'Service Confirmed' : 'Confirm Service Received'}
-                </button>
+                {(paymentsLoading || confirmationsLoading) ? (
+                  <div className="text-center text-gray-500">Loading payment and confirmation status...</div>
+                ) : (
+                  <>
+                    <p className="text-lg leading-relaxed mb-4">
+                      Did you receive the tutoring service perfectly? Confirm below to let us know!
+                    </p>
+                    <button
+                      onClick={handleConfirmService}
+                      className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${
+                        hasPaidForTutor && !hasConfirmedService
+                          ? 'bg-[#005482] text-white hover:bg-[#004368] shadow-lg hover:shadow-xl transform hover:-translate-y-0.5'
+                          : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                      }`}
+                      disabled={!hasPaidForTutor || hasConfirmedService}
+                    >
+                      <FaThumbsUp className="text-sm" />
+                      {hasConfirmedService ? 'Service Confirmed' : 'Confirm Service Received'}
+                    </button>
+                  </>
+                )}
               </div>
             </motion.section>
 
@@ -1870,7 +2319,6 @@ const TeacherDetails = () => {
                 </div>
               </div>
 
-              {/* Add Rating Form */}
               {user && !hasUserRated ? (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -1974,6 +2422,13 @@ const RatingForm = ({ tutorId }) => {
         icon: 'error',
         title: 'Rating Required',
         text: 'Please select a rating before submitting',
+        confirmButtonColor: '#DA3A60',
+        background: '#FFFFFF',
+        iconColor: '#DA3A60',
+        customClass: {
+          title: 'text-[#005482] font-bold',
+          content: 'text-[#70C5D7]'
+        }
       });
       return;
     }
@@ -1987,6 +2442,13 @@ const RatingForm = ({ tutorId }) => {
           icon: 'error',
           title: 'Already Rated',
           text: 'You have already submitted a review for this tutor.',
+          confirmButtonColor: '#DA3A60',
+          background: '#FFFFFF',
+          iconColor: '#DA3A60',
+          customClass: {
+            title: 'text-[#005482] font-bold',
+            content: 'text-[#70C5D7]'
+          }
         });
         return;
       }
@@ -2008,6 +2470,12 @@ const RatingForm = ({ tutorId }) => {
           text: 'Thank you for your feedback!',
           showConfirmButton: false,
           timer: 1500,
+          background: '#FFFFFF',
+          iconColor: '#FCBB45',
+          customClass: {
+            title: 'text-[#005482] font-bold',
+            content: 'text-[#70C5D7]'
+          }
         });
         setRating(0);
         reset();
@@ -2018,6 +2486,13 @@ const RatingForm = ({ tutorId }) => {
         icon: 'error',
         title: 'Error',
         text: 'Failed to submit rating. Please try again.',
+        confirmButtonColor: '#DA3A60',
+        background: '#FFFFFF',
+        iconColor: '#DA3A60',
+        customClass: {
+          title: 'text-[#005482] font-bold',
+          content: 'text-[#70C5D7]'
+        }
       });
     }
   };
@@ -2078,4 +2553,3 @@ const RatingForm = ({ tutorId }) => {
 };
 
 export default TeacherDetails;
-
