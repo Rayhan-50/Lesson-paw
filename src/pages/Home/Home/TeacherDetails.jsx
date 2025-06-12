@@ -1589,7 +1589,6 @@
 
 // export default TeacherDetails;
 
-
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useContext, useState, useEffect } from 'react';
@@ -1615,12 +1614,18 @@ const TeacherDetails = () => {
   const [hasPaidForTutor, setHasPaidForTutor] = useState(false);
   const [hasConfirmedService, setHasConfirmedService] = useState(false);
 
-  // Invalidate queries when user changes to ensure fresh data
+  // Reset states and invalidate queries when user changes
   useEffect(() => {
+    setHasConfirmedService(false);
+    setHasPaidForTutor(false);
+    setHasUserRated(false);
     if (user?.email) {
-      console.log('User email:', user.email);
+      console.log('User changed, resetting states and invalidating queries for:', user.email);
       queryClient.invalidateQueries(['payments', user.email]);
       queryClient.invalidateQueries(['confirmations', user.email, tutorId]);
+      // Force refetch to ensure fresh data
+      queryClient.refetchQueries(['confirmations', user.email, tutorId]);
+      queryClient.refetchQueries(['payments', user.email]);
     }
   }, [user?.email, tutorId, queryClient]);
 
@@ -1640,6 +1645,7 @@ const TeacherDetails = () => {
       if (user) {
         const hasRated = res.data.some(rating => rating.studentEmail === user.email);
         setHasUserRated(hasRated);
+        console.log('Has user rated:', hasRated);
       }
       return res.data;
     },
@@ -1660,8 +1666,8 @@ const TeacherDetails = () => {
     enabled: !!user?.email && !!tutorId,
     queryFn: async () => {
       const res = await axiosSecure.get(`/confirmations?email=${user.email}&tutorId=${tutorId}`);
-      console.log('Confirmations data:', res.data);
-      const hasConfirmed = res.data.some(confirmation => confirmation.tutorId === tutorId);
+      console.log('Confirmations data for', user.email, tutorId, ':', res.data);
+      const hasConfirmed = res.data.length > 0; // Simpler check since backend prevents duplicates
       setHasConfirmedService(hasConfirmed);
       console.log('Has confirmed service:', hasConfirmed);
       return res.data;
@@ -1673,7 +1679,7 @@ const TeacherDetails = () => {
       const paidTutorEmails = payments.flatMap(payment => payment.tutorEmails || []);
       const hasPaid = paidTutorEmails.includes(tutor.email);
       setHasPaidForTutor(hasPaid);
-      console.log('Has paid for tutor:', hasPaid);
+      console.log('Has paid for tutor:', hasPaid, 'Tutor email:', tutor.email);
     }
   }, [payments, tutor]);
 
@@ -1857,21 +1863,28 @@ const TeacherDetails = () => {
     window.open(`https://wa.me/${cleanedNumber}`, '_blank');
   };
 
-  const handleConfirmService = async () => {
+  const handleConfirmService = () => {
     if (!user) {
       Swal.fire({
-        icon: 'info',
         title: 'Login Required',
-        text: 'Please log in to confirm the service.',
+        text: 'Please login to confirm the service',
+        icon: 'info',
+        showCancelButton: true,
         confirmButtonText: 'Login',
+        cancelButtonText: 'Cancel',
         confirmButtonColor: '#DA3A60',
+        cancelButtonColor: '#70C5D7',
         background: '#FFFFFF',
         iconColor: '#FCBB45',
         customClass: {
           title: 'text-[#005482] font-bold',
           content: 'text-[#70C5D7]'
         }
-      }).then(() => navigate('/login'));
+      }).then(result => {
+        if (result.isConfirmed) {
+          navigate('/login');
+        }
+      });
       return;
     }
 
@@ -1901,9 +1914,10 @@ const TeacherDetails = () => {
 
     if (hasConfirmedService) {
       Swal.fire({
-        icon: 'info',
-        title: 'Already Confirmed',
+        title: 'Service Already Confirmed',
         text: 'You have already confirmed the service for this tutor.',
+        icon: 'info',
+        confirmButtonText: 'OK',
         confirmButtonColor: '#DA3A60',
         background: '#FFFFFF',
         iconColor: '#FCBB45',
@@ -1915,67 +1929,82 @@ const TeacherDetails = () => {
       return;
     }
 
-    try {
-      const result = await Swal.fire({
-        title: 'Confirm Service',
-        text: `Are you sure you want to confirm the tutoring service for ${tutor.name}? This action cannot be undone.`,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#DA3A60',
-        cancelButtonColor: '#70C5D7',
-        confirmButtonText: 'Yes, Confirm',
-        cancelButtonText: 'Cancel',
-        background: '#FFFFFF',
-        iconColor: '#FCBB45',
-        customClass: {
-          title: 'text-[#005482] font-bold',
-          content: 'text-[#70C5D7]'
-        }
-      });
-
-      if (!result.isConfirmed) {
-        return;
+    Swal.fire({
+      title: 'Confirm Service',
+      html: `
+        <div class="text-left">
+          <p class="text-[#005482] mb-4">Are you sure you want to confirm the tutoring service?</p>
+          <div class="bg-[#F8FBFF] p-4 rounded-xl">
+            <p class="text-[#70C5D7] mb-2">Tutor Details:</p>
+            <p class="text-[#005482]"><strong>Name:</strong> ${tutor.name}</p>
+            <p class="text-[#005482]"><strong>Subject:</strong> ${tutor.subjects?.[0] || 'Not specified'}</p>
+            <p className="text-[#005482]"><strong>Rate:</strong> $${tutor.hourlyRate}/hour</p>
+          </div>
+        </div>
+      `,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#DA3A60',
+      cancelButtonColor: '#70C5D7',
+      confirmButtonText: 'Yes, Confirm',
+      cancelButtonText: 'Cancel',
+      background: '#FFFFFF',
+      iconColor: '#FCBB45',
+      customClass: {
+        title: 'text-[#005482] font-bold',
+        htmlContainer: 'text-left'
       }
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await axiosSecure.post('/confirmations', {
+            email: user.email,
+            tutorId: tutor._id,
+            tutorName: tutor.name,
+            confirmedAt: new Date(),
+          });
 
-      await axiosSecure.post('/confirmations', {
-        email: user.email,
-        tutorId: tutor._id,
-        tutorName: tutor.name,
-        confirmedAt: new Date(),
-      });
+          queryClient.invalidateQueries(['confirmations', user.email, tutorId]);
+          setHasConfirmedService(true);
 
-      queryClient.invalidateQueries(['confirmations', user.email, tutorId]);
-
-      Swal.fire({
-        icon: 'success',
-        title: 'Service Confirmed',
-        text: 'Thank you for confirming the service!',
-        timer: 1500,
-        showConfirmButton: false,
-        background: '#FFFFFF',
-        iconColor: '#FCBB45',
-        customClass: {
-          title: 'text-[#005482] font-bold',
-          content: 'text-[#70C5D7]'
+          Swal.fire({
+            icon: 'success',
+            title: 'Service Confirmed',
+            text: 'Thank you for confirming the service!',
+            timer: 1500,
+            showConfirmButton: false,
+            background: '#FFFFFF',
+            iconColor: '#FCBB45',
+            customClass: {
+              title: 'text-[#005482] font-bold',
+              content: 'text-[#70C5D7]'
+            }
+          });
+        } catch (error) {
+          console.error('Error confirming service:', error);
+          let errorMessage = 'Failed to confirm service. Please try again.';
+          if (error.response?.status === 409) {
+            errorMessage = 'Service already confirmed for this tutor.';
+            setHasConfirmedService(true); // Update state to reflect existing confirmation
+          } else if (error.response?.status === 403) {
+            errorMessage = 'Authentication error. Please log in again.';
+            navigate('/login');
+          }
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: errorMessage,
+            confirmButtonColor: '#DA3A60',
+            background: '#FFFFFF',
+            iconColor: '#DA3A60',
+            customClass: {
+              title: 'text-[#005482] font-bold',
+              content: 'text-[#70C5D7]'
+            }
+          });
         }
-      });
-
-      setHasConfirmedService(true);
-    } catch (error) {
-      console.error('Error confirming service:', error);
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'Failed to confirm service. Please try again.',
-        confirmButtonColor: '#DA3A60',
-        background: '#FFFFFF',
-        iconColor: '#DA3A60',
-        customClass: {
-          title: 'text-[#005482] font-bold',
-          content: 'text-[#70C5D7]'
-        }
-      });
-    }
+      }
+    });
   };
 
   if (tutorLoading || ratingsLoading || paymentsLoading || confirmationsLoading) {
@@ -2033,9 +2062,10 @@ const TeacherDetails = () => {
               <FaArrowLeft /> Back to Search
             </button>
             <div className="text-sm breadcrumbs">
-              <span className="opacity-75">Tutors</span>
-              <span className="mx-2">›</span>
-              <span>{tutor.name}</span>
+              <ul>
+                <li className="opacity-75">Tutors</li>
+                <li>{tutor.name}</li>
+              </ul>
             </div>
           </div>
 
@@ -2087,7 +2117,7 @@ const TeacherDetails = () => {
               <div className="flex items-center gap-4 mt-8">
                 <button
                   onClick={handleBookTutor}
-                  className="px-8 py-3 bg-[#DA3A60] hover:bg-[#DA3A60]/90 text-white rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                  className="px-8 py-3 bg-[#DA3A60] hover:bg-[#DA3A60]/90 text-white rounded-xl font-semibold transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                 >
                   <FaCheckCircle className="text-sm" /> Book Now
                 </button>
@@ -2097,7 +2127,7 @@ const TeacherDetails = () => {
                     hasPaidForTutor
                       ? 'border-white/30 hover:border-white text-white hover:bg-[#25D366] hover:border-[#25D366]'
                       : 'border-white/10 text-white/50 cursor-not-allowed'
-                  } rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2`}
+                  } rounded-xl font-semibold transition-all duration-300 flex items-center gap-2`}
                   disabled={!hasPaidForTutor}
                 >
                   {hasPaidForTutor ? (
@@ -2223,15 +2253,23 @@ const TeacherDetails = () => {
                     </p>
                     <button
                       onClick={handleConfirmService}
-                      className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${
+                      className={`px-6 py-3 border rounded-xl font-semibold transition-all duration-300 flex items-center gap-2 ${
                         hasPaidForTutor && !hasConfirmedService
-                          ? 'bg-[#005482] text-white hover:bg-[#004368] shadow-lg hover:shadow-xl transform hover:-translate-y-0.5'
-                          : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                          ? 'border-[#005482] text-[#005482] hover:bg-[#005482] hover:text-white hover:border-[#005482] shadow-lg hover:shadow-xl transform hover:-translate-y-0.5'
+                          : 'border-gray-200 text-gray-500 cursor-not-allowed'
                       }`}
                       disabled={!hasPaidForTutor || hasConfirmedService}
                     >
-                      <FaThumbsUp className="text-sm" />
-                      {hasConfirmedService ? 'Service Confirmed' : 'Confirm Service Received'}
+                      {hasPaidForTutor && !hasConfirmedService ? (
+                        <>
+                          <FaThumbsUp className="text-sm" /> Confirm Service
+                        </>
+                      ) : (
+                        <>
+                          <FaLock className="text-sm" />{' '}
+                          {hasConfirmedService ? 'Service Confirmed' : 'Book Tutor to Confirm'}
+                        </>
+                      )}
                     </button>
                   </>
                 )}
@@ -2544,7 +2582,7 @@ const RatingForm = ({ tutorId }) => {
 
       <button
         type="submit"
-        className="w-full px-6 py-3 bg-[#005482] text-white rounded-lg hover:bg-[#004368] transition-all duration-300 flex items-center justify-center gap-2"
+        className="w-full px-6 py-3 bg-[#005482] text-white rounded-lg hover:bg-[#004368] transition-all duration-300 flex items-center gap-2"
       >
         <FaStar className="text-sm" /> Submit Review
       </button>
