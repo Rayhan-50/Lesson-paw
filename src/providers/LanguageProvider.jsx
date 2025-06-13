@@ -331,6 +331,25 @@ const languages = {
       readTime: 'Read time',
       author: 'Author',
       relatedTopics: 'Related Topics',
+
+      // Dashboard Menu
+      menu: 'Menu',
+      manageProfile: 'Gérer le Profil',
+      myBookings: 'Mes Réservations',
+      joinAsTeacher: 'Devenir Professeur',
+      postJob: 'Publier une Offre',
+      myPosts: 'Mes Offres',
+      myJobs: 'Mes Offres',
+      paymentHistory: 'Historique des Paiements',
+
+      // Student Profile
+      profilePhoto: 'Profile Photo',
+      updateProfile: 'Update Profile',
+      editProfile: 'Edit Profile',
+      addressInformation: 'Address Information',
+      guardianInformation: 'Guardian Information',
+      personalInformation: 'Personal Information',
+      academicInformation: 'Academic Information',
     }
   },
   es: {
@@ -774,12 +793,12 @@ const languages = {
       qualityEducation: 'Nous nous engageons à fournir une éducation de haute qualité',
       
       // Subjects
-      mathematics: 'Matematik',
-      sciences: 'Syans',
-      languages: 'Lang',
-      history: 'Istwa',
-      computerScience: 'Enfòmatik',
-      artsMusic: 'Art ak Mizik',
+      mathematics: 'Mathématiques',
+      sciences: 'Sciences',
+      languages: 'Langues',
+      history: 'Histoire',
+      computerScience: 'Informatique',
+      artsMusic: 'Art et Musique',
       
       // Stats
       studentsHelped: 'Elèv ki Jwenn Èd',
@@ -921,29 +940,23 @@ const languages = {
       getDirections: 'Jwenn Direksyon',
 
       // Dashboard Menu
-      manageProfile: 'Jere Pwofil',
-      myBookings: 'Rezèvasyon Mwen',
-      joinAsTeacher: 'Vin yon Pwofesè',
-      postJob: 'Poste Travay',
-      myPosts: 'Piblikasyon Mwen',
-      availableJobs: 'Travay Disponib',
-      manageServices: 'Jere Sèvis',
-      manageUsers: 'Jere Itilizatè',
-      allTutors: 'Tout Pwofesè',
-      showMessages: 'Montre Mesaj',
-      addTutor: 'Ajoute Pwofesè',
-      applications: 'Aplikasyon',
-      payments: 'Peman',
-      analytics: 'Analiz',
-      students: 'Elèv',
-      allJobs: 'Tout Travay',
-      allServices: 'Tout Sèvis',
-      story: 'Istwa',
-      manageStory: 'Jere Istwa',
-      addBlog: 'Ajoute Blog',
-      editBlog: 'Modifye Blog',
-      confirmation: 'Konfimasyon yo',
-      menu: 'Meni',
+      menu: 'Menu',
+      manageProfile: 'Gérer le Profil',
+      myBookings: 'Mes Réservations',
+      joinAsTeacher: 'Devenir Professeur',
+      postJob: 'Publier une Offre',
+      myPosts: 'Mes Offres',
+      myJobs: 'Mes Offres',
+      paymentHistory: 'Historique des Paiements',
+
+      // Student Profile
+      profilePhoto: 'Photo de Profil',
+      updateProfile: 'Mettre à Jour le Profil',
+      editProfile: 'Modifier le Profil',
+      addressInformation: 'Informations d\'Adresse',
+      guardianInformation: 'Informations du Tuteur',
+      personalInformation: 'Informations Personnelles',
+      academicInformation: 'Informations Académiques',
 
       // Find Teacher Guide
       findPerfectTeacher: 'Jwenn Pwofesè Pafè Ou',
@@ -1187,12 +1200,12 @@ const languages = {
       qualityEducation: 'Nou angaje nou pou bay edikasyon kalite siperyè',
       
       // Subjects
-      mathematics: 'Matematik',
-      sciences: 'Syans',
-      languages: 'Lang',
-      history: 'Istwa',
-      computerScience: 'Enfòmatik',
-      artsMusic: 'Art ak Mizik',
+      mathematics: 'Mathématiques',
+      sciences: 'Sciences',
+      languages: 'Langues',
+      history: 'Histoire',
+      computerScience: 'Informatique',
+      artsMusic: 'Art et Musique',
       
       // Stats
       studentsHelped: 'Elèv ki Jwenn Èd',
@@ -1325,29 +1338,23 @@ const languages = {
       getDirections: 'Jwenn Direksyon',
 
       // Dashboard Menu
+      menu: 'Menu',
       manageProfile: 'Jere Pwofil',
       myBookings: 'Rezèvasyon Mwen',
       joinAsTeacher: 'Vin yon Pwofesè',
       postJob: 'Poste Travay',
       myPosts: 'Piblikasyon Mwen',
-      availableJobs: 'Travay Disponib',
-      manageServices: 'Jere Sèvis',
-      manageUsers: 'Jere Itilizatè',
-      allTutors: 'Tout Pwofesè',
-      showMessages: 'Montre Mesaj',
-      addTutor: 'Ajoute Pwofesè',
-      applications: 'Aplikasyon',
-      payments: 'Peman',
-      analytics: 'Analiz',
-      students: 'Elèv',
-      allJobs: 'Tout Travay',
-      allServices: 'Tout Sèvis',
-      story: 'Istwa',
-      manageStory: 'Jere Istwa',
-      addBlog: 'Ajoute Blog',
-      editBlog: 'Modifye Blog',
-      confirmation: 'Konfimasyon yo',
-      menu: 'Meni',
+      myJobs: 'Piblikasyon Mwen',
+      paymentHistory: 'Peman',
+
+      // Student Profile
+      profilePhoto: 'Foto Pwofil',
+      updateProfile: 'Mete Pwofil a Ajou',
+      editProfile: 'Modifye Pwofil',
+      addressInformation: 'Enfòmasyon Adrès',
+      guardianInformation: 'Enfòmasyon Gadyen',
+      personalInformation: 'Enfòmasyon Pèsonèl',
+      academicInformation: 'Enfòmasyon Akademik',
 
       // Find Teacher Guide
       findPerfectTeacher: 'Jwenn Pwofesè Pafè Ou',

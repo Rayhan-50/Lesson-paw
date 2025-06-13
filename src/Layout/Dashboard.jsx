@@ -8,7 +8,7 @@ import {
   FaBars, FaTimes, FaUser, FaTasks, FaHome, FaUserPlus,
   FaBook, FaCheckCircle, FaMapMarkerAlt, FaMoneyBillWave,
   FaChartBar, FaBriefcase, FaEdit, FaPlusCircle, FaSignOutAlt, FaSearch, FaEnvelope,
-  FaGlobe, FaChevronDown
+  FaGlobe, FaChevronDown,FaHistory
 } from "react-icons/fa";
 import { useQuery } from "@tanstack/react-query";
 import useAxiosSecure from "../hooks/useAxiosSecure";
@@ -144,6 +144,8 @@ const Dashboard = () => {
                     {renderNavLink("/dashboard/joinTeacher", <FaUserPlus className="text-xl" />, translate('joinAsTeacher'))}
                     {renderNavLink("/dashboard/post-job", <FaPlusCircle className="text-xl" />, translate('postJob'))}
                     {renderNavLink("/dashboard/myJobs", <FaPlusCircle className="text-xl" />, translate('myJobs'))}
+                    {renderNavLink("/dashboard/paymentHistory", <FaHistory className="text-xl" />, translate('Payment History'))}
+
                   </>
                 )}
 

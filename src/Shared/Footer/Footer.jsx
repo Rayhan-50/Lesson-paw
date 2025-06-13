@@ -52,7 +52,7 @@ const Footer = () => {
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-xl font-semibold mb-4">
+            <h3 className="text-xl font-semibold mb-4 text-[#FCBB45]">
               {translate("quickLinks")}
             </h3>
             <ul className="space-y-2">
@@ -106,7 +106,7 @@ const Footer = () => {
 
           {/* Subjects */}
           <div>
-            <h3 className="text-xl font-semibold mb-4">
+            <h3 className="text-xl font-semibold mb-4 text-[#FCBB45]">
               {translate("subjects")}
             </h3>
             <ul className="space-y-2">

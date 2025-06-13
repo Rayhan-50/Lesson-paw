@@ -150,7 +150,7 @@ const SignUp = () => {
             {/* Left Section with Illustration */}
             <div className="hidden lg:flex lg:w-1/2 bg-[#70C5D7] items-center justify-center p-12">
                 <div className="max-w-lg">
-                    <h2 className="text-4xl font-bold text-white mb-6">Join <span className="text-[#FCBB45]">LessonPaw</span> Today!</h2>
+                    <h2 className="text-4xl font-bold text-white mb-6">Join <span className="text-[#FCBB45]">LesonPaw</span> Today!</h2>
                     <p className="text-xl text-white/90">Connect with a community of educators and learners. Share knowledge, discover resources, and grow together.</p>
                     <div className="mt-8">
                         <img 
